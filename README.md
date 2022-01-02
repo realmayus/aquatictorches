@@ -9,5 +9,7 @@ Slightly brighter at light level 15, Aquatic Torches enable you to illuminate th
 
 It's available for Forge on 1.17 and 1.18. A Fabric port is planned.
 
+## [More Info & Download on CurseForge](https://www.curseforge.com/minecraft/mc-mods/aquatic-torches)
+
 ## Recipe
 ![Like normal torch recipe, but with glowing ink sack instead of coal](recipe.png)
