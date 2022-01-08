@@ -17,11 +17,11 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -29,14 +29,15 @@ import java.util.Random;
 
 public class AquaticWallTorchBlock extends TorchBlock {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
-    protected static final float AABB_OFFSET = 2.5F;
+
     private static final Map<Direction, VoxelShape> AABBS = Maps.newEnumMap(ImmutableMap.of(Direction.NORTH, Block.box(5.5D, 3.0D, 11.0D, 10.5D, 13.0D, 16.0D), Direction.SOUTH, Block.box(5.5D, 3.0D, 0.0D, 10.5D, 13.0D, 5.0D), Direction.WEST, Block.box(11.0D, 3.0D, 5.5D, 16.0D, 13.0D, 10.5D), Direction.EAST, Block.box(0.0D, 3.0D, 5.5D, 5.0D, 13.0D, 10.5D)));
 
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    public static final IntegerProperty FLOWING_WATER = IntegerProperty.create("water_level", 1, 8);
 
     public AquaticWallTorchBlock(Properties p_58123_, ParticleOptions p_58124_) {
         super(p_58123_, p_58124_);
-        this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false).setValue(FACING, Direction.NORTH));
+        this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false).setValue(FLOWING_WATER, 8).setValue(FACING, Direction.NORTH));
     }
 
     public String getDescriptionId() {
@@ -51,12 +52,6 @@ public class AquaticWallTorchBlock extends TorchBlock {
         return AABBS.get(p_58157_.getValue(FACING));
     }
 
-    public boolean canSurvive(BlockState p_58133_, LevelReader p_58134_, BlockPos p_58135_) {
-        Direction direction = p_58133_.getValue(FACING);
-        BlockPos blockpos = p_58135_.relative(direction.getOpposite());
-        BlockState blockstate = p_58134_.getBlockState(blockpos);
-        return blockstate.isFaceSturdy(p_58134_, blockpos, direction);
-    }
 
     public BlockState rotate(BlockState p_58140_, Rotation p_58141_) {
         return p_58140_.setValue(FACING, p_58141_.rotate(p_58140_.getValue(FACING)));
@@ -66,10 +61,16 @@ public class AquaticWallTorchBlock extends TorchBlock {
         return p_58137_.rotate(p_58138_.getRotation(p_58137_.getValue(FACING)));
     }
 
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_58150_) {
-        p_58150_.add(FACING).add(WATERLOGGED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> stateBuilder) {
+        stateBuilder.add(FACING).add(WATERLOGGED).add(FLOWING_WATER);
     }
 
+    public boolean canSurvive(BlockState blockState, LevelReader levelReader, BlockPos blockPos) {
+        Direction direction = blockState.getValue(FACING);
+        BlockPos blockpos = blockPos.relative(direction.getOpposite());  // block pos of block our torch is connected to
+        BlockState blockstate = levelReader.getBlockState(blockpos);
+        return blockstate.isFaceSturdy(levelReader, blockpos, direction);
+    }
 
     @Nullable
     public BlockState getStateForPlacement(BlockPlaceContext placeContext) {
@@ -89,13 +90,14 @@ public class AquaticWallTorchBlock extends TorchBlock {
         }
 
         FluidState fluidstate = placeContext.getLevel().getFluidState(placeContext.getClickedPos());
-        boolean flag = fluidstate.getType() == Fluids.WATER;
-        return blockstate.setValue(WATERLOGGED, flag);
+        boolean flag = fluidstate.getType() == Fluids.WATER || fluidstate.getType() == Fluids.FLOWING_WATER;
+        boolean is_flowing = fluidstate.getType() == Fluids.FLOWING_WATER;
+        return blockstate.setValue(WATERLOGGED, flag).setValue(FLOWING_WATER, is_flowing ? fluidstate.getAmount() : 8);
     }
 
-    public @NotNull BlockState updateShape(BlockState thisState, Direction directionToNeighbor, BlockState neighborState, LevelAccessor levelAccessor, BlockPos thisPos, BlockPos neighborPos) {
+    public BlockState updateShape(BlockState thisState, Direction directionToNeighbor, BlockState neighborState, LevelAccessor levelAccessor, BlockPos thisPos, BlockPos neighborPos) {
         if (thisState.getValue(WATERLOGGED)) {
-            levelAccessor.scheduleTick(thisPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelAccessor));
+            levelAccessor.getLiquidTicks().scheduleTick(thisPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelAccessor));
         }
         if (directionToNeighbor.getOpposite() == thisState.getValue(FACING) && !thisState.canSurvive(levelAccessor, thisPos)) {
             return Blocks.AIR.defaultBlockState();
@@ -105,7 +107,12 @@ public class AquaticWallTorchBlock extends TorchBlock {
     }
 
     public FluidState getFluidState(BlockState blockState) {
-        return blockState.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(blockState);
+        if (blockState.getValue(WATERLOGGED) && blockState.getValue(FLOWING_WATER) == 8) {
+            return Fluids.WATER.getSource(false);
+        } else if (blockState.getValue(WATERLOGGED) && blockState.getValue(FLOWING_WATER) != 8) {
+            return Fluids.WATER.getFlowing(blockState.getValue(FLOWING_WATER), false);
+        }
+        return Fluids.EMPTY.defaultFluidState();
     }
 
     @Override
