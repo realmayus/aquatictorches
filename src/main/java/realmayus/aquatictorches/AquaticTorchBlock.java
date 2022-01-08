@@ -8,21 +8,24 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.TorchBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.Random;
 
 public class AquaticTorchBlock extends TorchBlock implements SimpleWaterloggedBlock {
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    public static final IntegerProperty FLOWING_WATER = IntegerProperty.create("water_level", 1, 8);
+
 
     public AquaticTorchBlock(Properties properties, ParticleOptions particleOptions) {
         super(properties, particleOptions);
@@ -32,24 +35,33 @@ public class AquaticTorchBlock extends TorchBlock implements SimpleWaterloggedBl
     @Nullable
     public BlockState getStateForPlacement(BlockPlaceContext placeContext) {
         FluidState fluidstate = placeContext.getLevel().getFluidState(placeContext.getClickedPos());
-        boolean flag = fluidstate.getType() == Fluids.WATER;
-        return super.getStateForPlacement(placeContext).setValue(WATERLOGGED, flag);
+        boolean flag = fluidstate.getType() == Fluids.WATER || fluidstate.getType() == Fluids.FLOWING_WATER;
+        boolean is_flowing = fluidstate.getType() == Fluids.FLOWING_WATER;
+        return this.defaultBlockState().setValue(WATERLOGGED, flag).setValue(FLOWING_WATER, is_flowing ? fluidstate.getAmount() : 8);
     }
 
-    public @NotNull BlockState updateShape(BlockState p_51461_, Direction p_51462_, BlockState p_51463_, LevelAccessor p_51464_, BlockPos p_51465_, BlockPos p_51466_) {
-        if (p_51461_.getValue(WATERLOGGED)) {
-            p_51464_.scheduleTick(p_51465_, Fluids.WATER, Fluids.WATER.getTickDelay(p_51464_));
+    public BlockState updateShape(BlockState thisState, Direction directionToNeighbor, BlockState neighborState, LevelAccessor levelAccessor, BlockPos thisPos, BlockPos neighborPos) {
+        if (thisState.getValue(WATERLOGGED)) {
+            levelAccessor.scheduleTick(thisPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelAccessor));
         }
 
-        return super.updateShape(p_51461_, p_51462_, p_51463_, p_51464_, p_51465_, p_51466_);
+        if (directionToNeighbor == Direction.DOWN && !thisState.canSurvive(levelAccessor, thisPos)) {
+            return Blocks.AIR.defaultBlockState();
+        } else {
+            return thisState;
+        }
     }
-
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_51468_) {
-        p_51468_.add(WATERLOGGED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> stateBuilder) {
+        stateBuilder.add(WATERLOGGED).add(FLOWING_WATER);
     }
 
     public FluidState getFluidState(BlockState blockState) {
-        return blockState.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(blockState);
+        if (blockState.getValue(WATERLOGGED) && blockState.getValue(FLOWING_WATER) == 8) {
+            return Fluids.WATER.getSource(false);
+        } else if (blockState.getValue(WATERLOGGED) && blockState.getValue(FLOWING_WATER) != 8) {
+            return Fluids.WATER.getFlowing(blockState.getValue(FLOWING_WATER), false);
+        }
+        return Fluids.EMPTY.defaultFluidState();
     }
 
     @Override
