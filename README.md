@@ -7,7 +7,7 @@ Ever wondered what to do with glowing ink sacs aside from glowing item frames? A
 
 Slightly brighter at light level 15, Aquatic Torches enable you to illuminate the entrance of your underwater bases and bring light to the vast darkness of the oceans.
 
-It's available for Forge and Fabric on both 1.17 and 1.18.
+It's available for Forge and [Fabric](https://github.com/realmayus/aquatictorches-fabric) on both 1.17 and 1.18.
 
 ## [More Info & Download on CurseForge](https://www.curseforge.com/minecraft/mc-mods/aquatic-torches)
 
