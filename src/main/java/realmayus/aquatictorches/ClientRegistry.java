@@ -15,7 +15,7 @@ public class ClientRegistry {
     public static void registerItems(FMLClientSetupEvent event)
     {
         System.out.println("REGISTER ITEMS CLIENT");
-        ItemBlockRenderTypes.setRenderLayer(AquaticTorches.AQUATIC_TORCH, RenderType.cutout());
-        ItemBlockRenderTypes.setRenderLayer(AquaticTorches.AQUATIC_WALL_TORCH, RenderType.cutout());
+        ItemBlockRenderTypes.setRenderLayer(AquaticTorches.AQUATIC_TORCH.get(), RenderType.cutout());
+        ItemBlockRenderTypes.setRenderLayer(AquaticTorches.AQUATIC_WALL_TORCH.get(), RenderType.cutout());
     }
 }

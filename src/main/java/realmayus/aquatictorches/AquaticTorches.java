@@ -1,5 +1,8 @@
 package realmayus.aquatictorches;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -8,12 +11,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.Material;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ObjectHolder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 
 @Mod("aquatictorches")
@@ -21,25 +24,17 @@ import org.apache.logging.log4j.Logger;
 public class AquaticTorches {
 
     private static final Logger LOGGER = LogManager.getLogger();
+    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, "aquatictorches");
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, "aquatictorches");
+    public static final RegistryObject<AquaticTorchBlock> AQUATIC_TORCH = BLOCKS.register("aquatic_torch", () -> new AquaticTorchBlock(BlockBehaviour.Properties.of(Material.DECORATION).noCollission().instabreak().lightLevel((p_50886_) -> 15).sound(SoundType.WOOD), ParticleTypes.FLAME));
+    public static final RegistryObject<AquaticWallTorchBlock> AQUATIC_WALL_TORCH = BLOCKS.register("aquatic_wall_torch", () -> new AquaticWallTorchBlock(BlockBehaviour.Properties.of(Material.DECORATION).noCollission().instabreak().lightLevel((p_152607_) -> 15).sound(SoundType.WOOD).lootFrom(AQUATIC_TORCH), ParticleTypes.FLAME));
+    public static final RegistryObject<StandingAndWallBlockItem> AQUATIC_TORCH_ITEM = ITEMS.register("aquatic_torch", () -> new StandingAndWallBlockItem(AQUATIC_TORCH.get(), AQUATIC_WALL_TORCH.get(), new Item.Properties().tab(CreativeModeTab.TAB_DECORATIONS)));
 
     public AquaticTorches() {
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        
+        BLOCKS.register(modEventBus);
+        ITEMS.register(modEventBus);
         LOGGER.info("Aquatic Torches loaded.");
-    }
-
-    @ObjectHolder("aquatictorches:aquatic_torch")
-    public static AquaticTorchBlock AQUATIC_TORCH;
-
-    @ObjectHolder("aquatictorches:aquatic_wall_torch")
-    public static AquaticWallTorchBlock AQUATIC_WALL_TORCH;
-
-    @SubscribeEvent
-    public static void registerBlocks(RegistryEvent.Register<Block> event) {
-        event.getRegistry().register(new AquaticTorchBlock(BlockBehaviour.Properties.of(Material.DECORATION).noCollission().instabreak().lightLevel((p_50886_) -> 15).sound(SoundType.WOOD), ParticleTypes.FLAME).setRegistryName("aquatictorches:aquatic_torch"));
-        event.getRegistry().register(new AquaticWallTorchBlock(BlockBehaviour.Properties.of(Material.DECORATION).noCollission().instabreak().lightLevel((p_152607_) -> 15).sound(SoundType.WOOD).lootFrom(() -> AQUATIC_TORCH), ParticleTypes.FLAME).setRegistryName("aquatictorches:aquatic_wall_torch"));
-    }
-
-    @SubscribeEvent
-    public static void registerItems(RegistryEvent.Register<Item> event) {
-        event.getRegistry().register(new StandingAndWallBlockItem(AQUATIC_TORCH, AQUATIC_WALL_TORCH, new Item.Properties().tab(CreativeModeTab.TAB_DECORATIONS)).setRegistryName("aquatictorches:aquatic_torch"));
     }
 }
