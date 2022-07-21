@@ -1,17 +1,28 @@
 package realmayus.aquatictorches;
 
+import java.util.Map;
+
+import javax.annotation.Nullable;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.TorchBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -22,10 +33,6 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-
-import javax.annotation.Nullable;
-import java.util.Map;
-import java.util.Random;
 
 public class AquaticWallTorchBlock extends TorchBlock {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
@@ -116,7 +123,7 @@ public class AquaticWallTorchBlock extends TorchBlock {
     }
 
     @Override
-    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, Random random) {
+    public void animateTick(BlockState blockState, Level level, BlockPos blockPos, RandomSource random) {
         Direction direction = blockState.getValue(FACING);
         double d0 = (double)blockPos.getX() + 0.5D;
         double d1 = (double)blockPos.getY() + 0.7D;
