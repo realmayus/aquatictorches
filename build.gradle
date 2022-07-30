@@ -15,7 +15,7 @@ group = 'realmayus'
 version = '1.1.0'
 
 java {
-    archivesBaseName = 'aquatictorches-1.19'
+    archivesBaseName = 'aquatictorches-1.19-forge'
     toolchain.languageVersion = JavaLanguageVersion.of(17)
 }
 
